@@ -1,0 +1,61 @@
+plugins {
+    id 'org.springframework.boot' version '2.3.2.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'java'
+}
+
+group = 'com.ashrapov'
+version = '0.0.1'
+sourceCompatibility = '1.8'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.modelmapper:modelmapper:2.3.6'
+    implementation 'org.hibernate.validator:hibernate-validator:6.1.5.Final'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompile('org.mockito:mockito-core:3.4.6')
+    testCompile "org.testcontainers:testcontainers:1.14.3"
+    testImplementation "org.testcontainers:elasticsearch:1.14.3"
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+task unpackDeps {
+    doLast {
+        mkdir "${buildDir}/dependency"
+    }
+}
+
+task unpackLibs(type: Copy) {
+    FileTree libsList = fileTree(dir: "${buildDir}/libs")
+    libsList.each {
+        f->
+            copy {
+                from(zipTree(f))
+                into("${buildDir}/dependency")
+            }
+    }
+}
+
+unpackDeps.finalizedBy unpackLibs
+
+gradle.buildFinished {
+    unpackDeps
+}
